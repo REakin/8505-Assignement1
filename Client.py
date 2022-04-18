@@ -36,7 +36,7 @@ class UI(threading.Thread):
         #message widget
         self.messageWidget = tk.Frame(self.root, bg='#E0E0E0')
         self.messageWidget.grid(row=1, column=0, sticky='nsew')
-        self.messageWidget.grid_columnconfigure(0, weight=1)
+        self.messageWidget.grid_columnconfigure((0,1), weight=1, uniform="column")
         self.messageWidget.grid_rowconfigure(1, weight=1)
 
         #create treeview
@@ -61,18 +61,18 @@ class UI(threading.Thread):
         # self.tree.bind('<Double-1>', self.on_double_click)
         
         #create message
-        self.message = tk.Text(self.messageWidget, height=5, width=50)
+        self.message = tk.Text(self.messageWidget, height=5)
         self.message.grid(row=0, column=0, columnspan=2, sticky='nsew')
         self.message.configure(state='disabled')
         self.message.configure(background='#E0E0E0')
 
         #create save button
         self.save_button = tk.Button(self.messageWidget, text='Save', command=self.save_message)
-        self.save_button.grid(row=1, column=0)
+        self.save_button.grid(row=1, column=0, sticky='nsew')
 
         #create clear button
         self.clear_button = tk.Button(self.messageWidget, text='Clear', command=self.clear_message)
-        self.clear_button.grid(row=1, column=1)
+        self.clear_button.grid(row=1, column=1, sticky='nsew')
 
         #main loop
         self.root.mainloop()
@@ -132,8 +132,6 @@ def packet_callback(packet, ui):
         ui.message.configure(state='normal')
         ui.message.insert('end', decoded_message)
         ui.message.configure(state='disabled')
-
-
 
 def main():
     #create the UI
