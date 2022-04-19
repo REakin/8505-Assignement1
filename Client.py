@@ -1,5 +1,3 @@
-from itertools import count
-from struct import pack
 import scapy
 import os
 import sys
@@ -40,12 +38,12 @@ class UI(threading.Thread):
         self.messageWidget.grid_rowconfigure(1, weight=1)
 
         #create treeview
-        self.tree = tk.ttk.Treeview(self.packet_info, columns=('Time', 'Source', 'Source Port', 'Checksum', 'Length'))
-        self.tree.heading('#0', text='Time')
-        self.tree.heading('#1', text='Source')
-        self.tree.heading('#2', text='Source Port')
-        self.tree.heading('#3', text='CheckSum')
-        self.tree.heading('#4', text='Length')
+        self.tree = tk.ttk.Treeview(self.packet_info, columns=('Time', 'Source', 'Source Port', 'Checksum', 'Length'), show='headings')
+        self.tree.heading('Time', text='Time')
+        self.tree.heading('Source', text='Source')
+        self.tree.heading('Source Port', text='Source Port')
+        self.tree.heading('Checksum', text='CheckSum')
+        self.tree.heading('Length', text='Length')
         self.tree.grid(row=0, column=0, sticky='nsew')
 
         #create scrollbar
@@ -53,11 +51,11 @@ class UI(threading.Thread):
         self.scrollbar.grid(row=0, column=1, sticky='nsew')
         #configure treeview
         self.tree.configure(yscrollcommand=self.scrollbar.set)
-        self.tree.column('#0', width=200, stretch=False)
-        self.tree.column('#1', width=200, stretch=False)
-        self.tree.column('#2', width=140, stretch=False)
-        self.tree.column('#3', width=140, stretch=False)
-        self.tree.column('#4', width=100, stretch=False)
+        self.tree.column('Time', width=200, stretch=False)
+        self.tree.column('Source', width=200, stretch=False)
+        self.tree.column('Source Port', width=140, stretch=False)
+        self.tree.column('Checksum', width=140, stretch=False)
+        self.tree.column('Length', width=100, stretch=False)
         # self.tree.bind('<Double-1>', self.on_double_click)
         
         #create message
@@ -78,7 +76,7 @@ class UI(threading.Thread):
         self.root.mainloop()
 
     def add_packet(self, packet):
-        chksum = packet.chksum
+        chksum = packet[UDP].chksum
         src = packet.src
         time = datetime.datetime.fromtimestamp(packet.time)
         length = len(packet.payload.load)
@@ -122,7 +120,7 @@ def packet_callback(packet, ui):
         # print("[+] Checksum: " + str(checksum))
         #extract the shift
         shift = (packet[Raw].load).decode()
-        shift == len(shift)
+        shift = len(shift)
 
         #decrypt the message
         decoded_message = ceaser(checksum, -int(shift))
