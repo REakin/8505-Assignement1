@@ -13,8 +13,11 @@ class UI(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self.start()
+
     def run(self):
         self.root = tk.Tk()
+        self.random = tk.IntVar()
+        
         self.root.title("Covert Channel Client")
         self.root.resizable(0,0)
         self.root.configure(background='#FFFFFF')
@@ -36,12 +39,6 @@ class UI(threading.Thread):
         self.mac_field = tk.Entry(self.input_frame, width=50)
         self.mac_field.grid(row=1, column=1, sticky='nsew')
 
-        #create shift field
-        self.shift_label = tk.Label(self.input_frame, text="Shift:", bg='#FFFFFF')
-        self.shift_label.grid(row=2, column=0, sticky='nsew')
-        self.shift_field = tk.Entry(self.input_frame, width=50)
-        self.shift_field.grid(row=2, column=1, sticky='nsew')
-
         #create port field
         self.port_label = tk.Label(self.input_frame, text="Port:", bg='#FFFFFF')
         self.port_label.grid(row=3, column=0, sticky='nsew')
@@ -54,6 +51,20 @@ class UI(threading.Thread):
         self.message_field = tk.Entry(self.input_frame, width=50)
         self.message_field.grid(row=4, column=1, sticky='nsew')
 
+        #create shift field
+        self.shift_label = tk.Label(self.input_frame, text="Shift:", bg='#FFFFFF')
+        self.shift_label.grid(row=2, column=0, sticky='nsew')
+        self.shift_field = tk.Entry(self.input_frame, width=50)
+        self.shift_field.grid(row=2, column=1, sticky='nsew')
+
+        #create checkbox
+        self.checkbox = tk.Checkbutton(self.input_frame, text="Random Shift", bg='#FFFFFF', variable=self.random)
+        self.checkbox.grid(row=5, column=0, sticky='nsew')
+
+        #create load button
+        self.load_button = tk.Button(self.input_frame, text="Load", bg='#FFFFFF', command=self.load_button_clicked)
+        self.load_button.grid(row=6, column=0, sticky='nsew')
+
         #create send button
         self.send_button = tk.Button(self.root, text="Send", command=self.send_button_clicked)
         self.send_button.grid(row=1, column=0, sticky='nsew')
@@ -63,28 +74,46 @@ class UI(threading.Thread):
     def send_button_clicked(self):
         self.ip = str(self.ip_field.get())
         self.mac = self.mac_field.get()
-        self.shift = self.shift_field.get()
+        # self.shift = self.shift_field.get()
         self.port = self.port_field.get()
         self.message = self.message_field.get()
+        # if self.random.get() == 1:
+        #     self.shift = random.randint(0, 255)
+        # else:
+        #     self.shift = self.shift_field.get()
         #clear message field
         self.message_field.delete(0, 'end')
 
-        self.send_packets(self.ip, self.mac, self.shift, self.port, self.message)
+        self.send_packets(self.ip, self.mac, self.port, self.message)
     
-    def send_packets(self, ip, mac, shift, port, message):
+    def load_button_clicked(self):
+        #load text file
+        self.file_path = tk.filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
+        self.file = open(self.file_path, 'r')
+        self.message_field.delete(0, 'end')
+        self.message_field.insert(0, self.file.read())
+        self.file.close()
+
+    def send_packets(self, ip, mac, port, message):
         #create packet
-        cyphertext = ceaser(message, int(shift))
-        for car in cyphertext:
+        # cyphertext = ceaser(message, int(shift))
+        for car in message:
+            if self.random.get() == 1:
+                shift = random.randint(0, 255)
+            else:
+                shift = int(self.shift_field.get())
+            cyphertext = ceaser(car, shift)
             # create UDP packet
-            testchksum = int(hexlify(car.encode()), 16)
+            testchksum = int(hexlify(cyphertext.encode()), 16)
             #create an string the length of shift
             payload = ''.join(['\x00'] * int(shift))
             packet =  (Ether(dst=mac)/ IP(dst=ip) / UDP(sport=42069, dport=int(port), chksum=testchksum) / Raw(load=payload))
             #send packet
             sendp(packet, verbose=0)
+            #wait a second
+            time.sleep(.25)
         tk.messagebox.showinfo("Sent", "Sent packets to " + ip)
         
-
 def ceaser(text, shift):
     """
     :param text: string
@@ -105,29 +134,6 @@ def ceaser(text, shift):
 def main():
     ui = UI()
     ui.join()
-    # #get user input
-    # text = input("Enter text to encrypt: ")
-    # shift = int(input("Enter shift: "))
-    
-    # #encrypt text
-    # cyphertext = ceaser(text, shift)
-    
-    # #print cyphertext
-    # print("Encrypted text: " + cyphertext)
-    # print("Decrypted text: " + ceaser(cyphertext, -shift))
-
-
-    # for car in cyphertext:
-    #     # create UDP packet
-    #     testchksum = int(hexlify(car.encode()), 16)
-    #     packet =  (Ether(dst="34:c9:3d:23:12:d4")/ IP(dst=dst) / UDP(sport=42069,dport=20000, chksum=testchksum) / Raw(load=str(shift).encode()))
-    
-    #show packet
-    # print(packet.show())
-
-    # send packet
-        # sendp(packet, iface="Ethernet 2")
-    # t.join()
 
 if __name__ == '__main__':
     # dst = sys.argv[1]
